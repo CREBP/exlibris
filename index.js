@@ -118,7 +118,7 @@ function ExLibris(config) {
 	*/
 	this.get = function(id, callback) {
 		request.get(this._config.endpoints.get + '/primo/v1/pnxs/L/' + id)
-			.query({apikey: this._config.apiKey})
+			.query({apikey: this._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
 			.end(function(err, res) {
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.body);
