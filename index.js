@@ -10,7 +10,10 @@ function ExLibris(config) {
 	*/
 	this._config = {
 		apiKey: null,
-		endpoint: 'https://api-na.hosted.exlibrisgroup.com', // Set with setRegion()
+		endpoints: { // URLs to ALMA APIs - use setRegion() to quickly set these
+			search: 'https://api-na.hosted.exlibrisgroup.com',
+			get: 'https://api-na.hosted.exlibrisgroup.com', // Force this endpoint with get operations (for some demented reason Alma only searches with one URL)
+		},
 	};
 
 
@@ -38,7 +41,8 @@ function ExLibris(config) {
 
 		if (!regions[region]) throw new Error('Invalid region: ' + region);
 
-		this._config.endpoint = regions[region];
+		this._config.endpoints.search = regions[region];
+		// NOTE: Do NOT override .get endpoint as ALMA only ever returns results from the US for some reason
 
 		return this;
 	};
@@ -88,13 +92,33 @@ function ExLibris(config) {
 	/**
 	* Search for a reference via the Primo/PNX search API
 	* @param {string|Object} query The query to perform (will be translated via translateQuery() before execution)
+	* @param {function} callback The callback to trigger
 	* @return {Object} This chainable object
 	* @see translateQuery()
 	*/
 	this.search = function(query, callback) {
-		request.get(this._config.endpoint + '/primo/v1/pnxs')
+		request.get(this._config.endpoints.search + '/primo/v1/pnxs')
 			.set('Authorization', 'apikey ' + this._config.apiKey)
 			.query({q: this.translateQuery(query)})
+			.end(function(err, res) {
+				if (err) return callback(err);
+				if (res.status != 200) return callback(res.body);
+				callback(null, res.body);
+			});
+
+		return this;
+	};
+
+
+	/**
+	* Get a single document by its ID
+	* @param {string} id The document ID
+	* @param {function} callback The callback to trigger
+	* @return {Object} This chainable object
+	*/
+	this.get = function(id, callback) {
+		request.get(this._config.endpoints.get + '/primo/v1/pnxs/L/' + id)
+			.query({apikey: this._config.apiKey})
 			.end(function(err, res) {
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.body);
