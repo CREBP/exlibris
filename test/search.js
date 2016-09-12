@@ -1,3 +1,4 @@
+var config = require('./config');
 var exlibris = require('..');
 var expect = require('chai').expect;
 
