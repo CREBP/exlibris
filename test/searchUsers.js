@@ -10,7 +10,7 @@ describe('searchUsers', function() {
 		exlibris
 			.setKey(config.apikey)
 			.setRegion('apac')
-			.searchUsers({limit: 10}, function(err, res) {
+			.users.search({limit: 10}, function(err, res) {
 				expect(err).to.be.not.ok;
 
 				expect(res).to.be.an.array;

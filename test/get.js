@@ -9,7 +9,7 @@ describe('Get', function() {
 		exlibris
 			.setKey(config.apikey)
 			.setRegion('apac')
-			.get('DEMO-ALEPH001885761', function(err, res) {
+			.resources.get('DEMO-ALEPH001885761', function(err, res) {
 				expect(err).to.be.not.ok;
 
 				expect(res).to.have.property('pnxId', 'DEMO-ALEPH001885761');

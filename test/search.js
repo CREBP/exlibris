@@ -9,7 +9,7 @@ describe('Search', function() {
 		exlibris
 			.setKey(config.apikey)
 			.setRegion('apac')
-			.search({title: 'cancer'}, function(err, res) {
+			.resources.search({title: 'cancer'}, function(err, res) {
 				expect(err).to.be.not.ok;
 
 				expect(res).to.have.property('docs');
@@ -23,4 +23,21 @@ describe('Search', function() {
 			});
 	});
 
+	it.skip('should perform a search for an obscure paper', function(finish) {
+		exlibris
+			.setKey(config.apikey)
+			.setRegion('apac')
+			.resources.search({doi: {$eq: '10.7326/0003-4819-161-12-201412160-02010'}}, function(err, res) {
+				expect(err).to.be.not.ok;
+
+				expect(res).to.have.property('docs');
+				expect(res.docs).to.be.an.array;
+
+				expect(res).to.have.property('info');
+				expect(res.info).to.have.property('total');
+				expect(res.info.total).to.be.above(0);
+
+				finish();
+			});
+	});
 });

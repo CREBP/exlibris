@@ -5,11 +5,14 @@ var util = require('util');
 var xmlParser = require('xml-js');
 
 function ExLibris(config) {
+	var el = {};
+
+	// Config {{{
 	/**
 	* Config values
 	* @var {Object}
 	*/
-	this._config = {
+	el._config = {
 		apiKey: null,
 		endpoints: { // URLs to ALMA APIs - use setRegion() to quickly set these
 			search: 'https://api-na.hosted.exlibrisgroup.com',
@@ -23,9 +26,9 @@ function ExLibris(config) {
 	* Set initial config values
 	* @return {Object} This chainable object
 	*/
-	this.setConfig = function(config) {
-		_.merge(this._config, config);
-		return this;
+	el.setConfig = function(config) {
+		_.merge(el._config, config);
+		return el;
 	};
 
 
@@ -34,7 +37,7 @@ function ExLibris(config) {
 	* @param {string} region A valid ExLibris region. See code for list
 	* @return {Object} This chainable object
 	*/
-	this.setRegion = function(region) {
+	el.setRegion = function(region) {
 		var regions = {
 			'us': 'https://api-na.hosted.exlibrisgroup.com',
 			'eu': 'https://api-eu.hosted.exlibrisgroup.com',
@@ -43,10 +46,10 @@ function ExLibris(config) {
 
 		if (!regions[region]) throw new Error('Invalid region: ' + region);
 
-		this._config.endpoints.search = regions[region];
+		el._config.endpoints.search = regions[region];
 		// NOTE: Do NOT override .get endpoint as ALMA only ever returns results from the US for some reason
 
-		return this;
+		return el;
 	};
 
 
@@ -55,12 +58,13 @@ function ExLibris(config) {
 	* @param {string} key The API key to use
 	* @return {Object} This chainable object
 	*/
-	this.setKey = function(key) {
-		this._config.apiKey = key;
-		return this;
+	el.setKey = function(key) {
+		el._config.apiKey = key;
+		return el;
 	};
+	// }}}
 
-
+	// Utilities {{{
 	/**
 	* Takes a Mongo like query object and returns an ExLibris/Primo compatible query string
 	*
@@ -73,7 +77,7 @@ function ExLibris(config) {
 	* @param {string|Object} query Either a Primo compatible string (no transform) or a complex Mongo like object
 	* @return {string} The ExLibris/Primo search query
 	*/
-	this.translateQuery = function(query) {
+	el.translateQuery = function(query) {
 		if (_.isString(query)) return query; // Given string - return unaltered
 
 		return _(query)
@@ -89,58 +93,63 @@ function ExLibris(config) {
 			.filter()
 			.join(';');
 	};
+	// }}}
 
+	// .resources {{{
+	el.resources = {};
 
 	/**
-	* Search for a reference via the Primo/PNX search API
+	* Search for a resource (paper/article/book etc.) via the Primo/PNX search API
 	* @param {string|Object} query The query to perform (will be translated via translateQuery() before execution)
 	* @param {function} callback The callback to trigger
 	* @return {Object} This chainable object
 	* @see translateQuery()
 	*/
-	this.search = function(query, callback) {
-		request.get(this._config.endpoints.search + '/primo/v1/pnxs')
-			.set('Authorization', 'apikey ' + this._config.apiKey)
-			.query({q: this.translateQuery(query)})
+	el.resources.search = function(query, callback) {
+		request.get(el._config.endpoints.search + '/primo/v1/pnxs')
+			.set('Authorization', 'apikey ' + el._config.apiKey)
+			.query({q: el.translateQuery(query)})
 			.end(function(err, res) {
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.body);
 				callback(null, res.body);
 			});
 
-		return this;
+		return el;
 	};
 
 
 	/**
-	* Get a single document by its ID
+	* Get a single resource (paper/article/book etc.) by its ID
 	* @param {string} id The document ID
 	* @param {function} callback The callback to trigger
 	* @return {Object} This chainable object
 	*/
-	this.get = function(id, callback) {
-		request.get(this._config.endpoints.get + '/primo/v1/pnxs/L/' + id)
-			.query({apikey: this._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
+	el.resources.get = function(id, callback) {
+		request.get(el._config.endpoints.get + '/primo/v1/pnxs/L/' + id)
+			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
 			.end(function(err, res) {
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.body);
 				callback(null, res.body);
 			});
 
-		return this;
+		return el;
 	};
+	// }}}
 
-
+	// .users {{{
+	el.users = {};
 	/**
 	* Find a user or users by a query
 	* @param {Object} [query] The query to search users by
 	* @param {function} callback The callback to trigger
 	* @return {Object} This chainable object
 	*/
-	this.searchUsers = function(query, callback) {
-		request.get(this._config.endpoints.searchUsers + '/almaws/v1/users')
+	el.users.search = function(query, callback) {
+		request.get(el._config.endpoints.searchUsers + '/almaws/v1/users')
 			.query(query || {})
-			.query({apikey: this._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
+			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
 			.buffer()
 			.end(function(err, res) {
 				if (err) return callback(err);
@@ -156,11 +165,12 @@ function ExLibris(config) {
 				);
 			});
 	};
+	// }}}
 
 
 	// Load initial config if any
-	this.setConfig(config);
-	return this;
+	el.setConfig(config);
+	return el;
 }
 
 util.inherits(ExLibris, events.EventEmitter);
