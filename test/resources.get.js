@@ -2,7 +2,7 @@ var config = require('./config');
 var exlibris = require('..');
 var expect = require('chai').expect;
 
-describe('Get', function() {
+describe('resources.get()', function() {
 	this.timeout(10 * 1000);
 
 	it('should perform a simple get', function(finish) {

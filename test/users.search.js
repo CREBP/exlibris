@@ -2,7 +2,7 @@ var config = require('./config');
 var exlibris = require('..');
 var expect = require('chai').expect;
 
-describe('searchUsers', function() {
+describe('users.search()', function() {
 
 	it('should return the first 10 users', function(finish) {
 		this.timeout(30 * 1000);

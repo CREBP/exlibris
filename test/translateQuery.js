@@ -18,5 +18,5 @@ describe('translateQuery', function() {
 	it('should translate exact fields', function() {
 		expect(exlibris.translateQuery({title: {$eq: 'foo'}})).to.equal('title,exact,foo');
 	});
-	
+
 });

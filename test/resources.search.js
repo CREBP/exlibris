@@ -2,7 +2,7 @@ var config = require('./config');
 var exlibris = require('..');
 var expect = require('chai').expect;
 
-describe('Search', function() {
+describe('resources.search()', function() {
 	this.timeout(10 * 1000);
 
 	it('should perform a simple search', function(finish) {
