@@ -2,6 +2,7 @@ var _ = require('lodash');
 var events = require('events');
 var request = require('superagent');
 var util = require('util');
+var xmlParser = require('xml-js');
 
 function ExLibris(config) {
 	/**
@@ -13,6 +14,7 @@ function ExLibris(config) {
 		endpoints: { // URLs to ALMA APIs - use setRegion() to quickly set these
 			search: 'https://api-na.hosted.exlibrisgroup.com',
 			get: 'https://api-na.hosted.exlibrisgroup.com', // Force this endpoint with get operations (for some demented reason Alma only searches with one URL)
+			searchUsers: 'https://api-na.hosted.exlibrisgroup.com',
 		},
 	};
 
@@ -126,6 +128,33 @@ function ExLibris(config) {
 			});
 
 		return this;
+	};
+
+
+	/**
+	* Find a user or users by a query
+	* @param {Object} [query] The query to search users by
+	* @param {function} callback The callback to trigger
+	* @return {Object} This chainable object
+	*/
+	this.searchUsers = function(query, callback) {
+		request.get(this._config.endpoints.searchUsers + '/almaws/v1/users')
+			.query(query || {})
+			.query({apikey: this._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
+			.buffer()
+			.end(function(err, res) {
+				if (err) return callback(err);
+				if (res.status != 200) return callback(res.text);
+				callback(null,
+					xmlParser.xml2js(res.text.substr(res.text.indexOf('<users')), {compact: true}).users.user
+						.map(u => ({
+							id: u.primary_id._text,
+							url: u._attributes.link,
+							firstName: u.first_name._text,
+							lastName: u.last_name._text,
+						}))
+				);
+			});
 	};
 
 

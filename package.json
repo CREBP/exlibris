@@ -29,6 +29,8 @@
     "mocha": "^3.0.2"
   },
   "dependencies": {
-    "superagent": "^2.2.0"
+    "lodash": "^4.17.4",
+    "superagent": "^2.2.0",
+    "xml-js": "^1.0.2"
   }
 }
