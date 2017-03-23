@@ -15,9 +15,10 @@ function ExLibris(config) {
 	el._config = {
 		apiKey: null,
 		endpoints: { // URLs to ALMA APIs - use setRegion() to quickly set these
-			search: 'https://api-na.hosted.exlibrisgroup.com',
-			get: 'https://api-na.hosted.exlibrisgroup.com', // Force this endpoint with get operations (for some demented reason Alma only searches with one URL)
-			searchUsers: 'https://api-na.hosted.exlibrisgroup.com',
+			resourcesGet: 'https://api-na.hosted.exlibrisgroup.com', // Force this endpoint with get operations (for some demented reason Alma only searches with one URL)
+			resourcesSearch: 'https://api-na.hosted.exlibrisgroup.com',
+			resourcesRequest: 'https://api-na.hosted.exlibrisgroup.com',
+			usersSearch: 'https://api-na.hosted.exlibrisgroup.com',
 		},
 	};
 
@@ -46,8 +47,10 @@ function ExLibris(config) {
 
 		if (!regions[region]) throw new Error('Invalid region: ' + region);
 
-		el._config.endpoints.search = regions[region];
-		// NOTE: Do NOT override .get endpoint as ALMA only ever returns results from the US for some reason
+		// NOTE: Do NOT override .resourcesGet endpoint as ALMA only ever returns results from the US for some reason
+		el._config.endpoints.resourcesSearch = regions[region];
+		el._config.endpoints.resourcesRequest = regions[region];
+		el._config.endpoints.usersSearch = regions[region];
 
 		return el;
 	};
@@ -106,7 +109,7 @@ function ExLibris(config) {
 	* @see translateQuery()
 	*/
 	el.resources.search = function(query, callback) {
-		request.get(el._config.endpoints.search + '/primo/v1/pnxs')
+		request.get(el._config.endpoints.resourcesSearch + '/primo/v1/pnxs')
 			.set('Authorization', 'apikey ' + el._config.apiKey)
 			.query({q: el.translateQuery(query)})
 			.end(function(err, res) {
@@ -126,7 +129,7 @@ function ExLibris(config) {
 	* @return {Object} This chainable object
 	*/
 	el.resources.get = function(id, callback) {
-		request.get(el._config.endpoints.get + '/primo/v1/pnxs/L/' + id)
+		request.get(el._config.endpoints.resourcesGet + '/primo/v1/pnxs/L/' + id)
 			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
 			.end(function(err, res) {
 				if (err) return callback(err);
@@ -147,7 +150,7 @@ function ExLibris(config) {
 	* @return {Object} This chainable object
 	*/
 	el.users.search = function(query, callback) {
-		request.get(el._config.endpoints.searchUsers + '/almaws/v1/users')
+		request.get(el._config.endpoints.usersSearch + '/almaws/v1/users')
 			.query(query || {})
 			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
 			.buffer()
@@ -166,7 +169,6 @@ function ExLibris(config) {
 			});
 	};
 	// }}}
-
 
 	// Load initial config if any
 	el.setConfig(config);
