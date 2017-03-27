@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var argy = require('argy');
 var events = require('events');
 var request = require('superagent');
 var util = require('util');
@@ -139,6 +140,40 @@ function ExLibris(config) {
 
 		return el;
 	};
+
+
+	/**
+	* Place a request for delivery for a given resource
+	* @param {Object|string} res Either the full resource returned by resources.search() / resource.get() or the string ID value
+	* @param {Object|string} user Either the full user record returned by users.search() / users.get() or the string ID value
+	* @param {Object} [fields] Additional request fields. These must match the spec outlined in https://developers.exlibrisgroup.com/alma/apis/xsd/rest_user_resource_sharing_request.xsd?tags=POST
+	* @param {function} cb The callback to trigger
+	* @return {Object} This chainable object
+	*/
+	el.resources.request = argy('object|string object|string [object] function', function(res, user, fields, callback) {
+		var userid = _.isString(user) ? user : user.id;
+		if (!userid) throw new Error('Invalid UserID');
+
+		var resFiltered = _.pick(res, ['title', 'issn', 'isbn', 'author', 'author_initials', 'year', 'publisher', 'place_of_publication', 'edition', 'specific_edition', 'volume', 'journal_title', 'issue', 'chapter', 'pages', 'start_page', 'end_page', 'part', 'source', 'series_title_number', 'doi', 'pmid', 'call_number', 'bib_note', 'lcc_number', 'oclc_number']);
+		var fieldsFiltered = _.pick(res, ['format', 'pickup_location', 'additional_person_name']);
+
+		request.post(el._config.endpoints.resourcesRequest + '/almaws/v1/users/' + userid + '/resource_sharing_requests')
+			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
+			.send({
+				format: 'PHYSICAL',
+				pickup_location: 'MAIN',
+			})
+			.send(fieldsFiltered)
+			.send(resFiltered)
+			.end(function(err, res) {
+				console.log('GOTBACK-ERR', err);
+				console.log('GOTBACK-TXT', res.text);
+
+				if (err) return callback(err);
+				if (res.status != 200) return callback(res.text);
+				callback(null, null);
+			});
+	});
 	// }}}
 
 	// .users {{{
