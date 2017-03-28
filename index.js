@@ -145,8 +145,42 @@ function ExLibris(config) {
 	/**
 	* Place a request for delivery for a given resource
 	* @param {Object|string} res Either the full resource returned by resources.search() / resource.get() or the string ID value
+	* @param {string} [res.title]
+	* @param {string} [res.issn]
+	* @param {string} [res.isbn]
+	* @param {string} [res.author]
+	* @param {string} [res.author_initials]
+	* @param {string} [res.year]
+	* @param {string} [res.publisher]
+	* @param {string} [res.place_of_publication]
+	* @param {string} [res.edition]
+	* @param {string} [res.specific_edition]
+	* @param {string} [res.volume]
+	* @param {string} [res.journal_title]
+	* @param {string} [res.issue]
+	* @param {string} [res.chapter]
+	* @param {string} [res.pages]
+	* @param {string} [res.start_page]
+	* @param {string} [res.end_page]
+	* @param {string} [res.part]
+	* @param {string} [res.source]
+	* @param {string} [res.series_title_number]
+	* @param {string} [res.doi]
+	* @param {string} [res.pmid]
+	* @param {string} [res.call_number]
+	* @param {string} [res.bib_note]
+	* @param {string} [res.lcc_number]
+	* @param {string} [res.oclc_number]
+	* @param {string} [res.type='article'] Either 'book' or 'article'
 	* @param {Object|string} user Either the full user record returned by users.search() / users.get() or the string ID value
 	* @param {Object} [fields] Additional request fields. These must match the spec outlined in https://developers.exlibrisgroup.com/alma/apis/xsd/rest_user_resource_sharing_request.xsd?tags=POST
+	* @param {Object} [fields.format='PHYSICAL']
+	* @param {Object} [fields.pickup_location='MAIN']
+	* @param {Object} [fields.additional_person_name]
+	* @param {Object} [fields.agree_to_copyright_terms='true']
+	* @param {Object} [fields.allow_other_formats='false']
+	* @param {Object} [fields.last_interest_date=today]
+	* @param {Object} [fields.use_alternate_address=false]
 	* @param {function} cb The callback to trigger
 	* @return {Object} This chainable object
 	*/
@@ -154,24 +188,42 @@ function ExLibris(config) {
 		var userid = _.isString(user) ? user : user.id;
 		if (!userid) throw new Error('Invalid UserID');
 
-		var resFiltered = _.pick(res, ['title', 'issn', 'isbn', 'author', 'author_initials', 'year', 'publisher', 'place_of_publication', 'edition', 'specific_edition', 'volume', 'journal_title', 'issue', 'chapter', 'pages', 'start_page', 'end_page', 'part', 'source', 'series_title_number', 'doi', 'pmid', 'call_number', 'bib_note', 'lcc_number', 'oclc_number']);
-		var fieldsFiltered = _.pick(res, ['format', 'pickup_location', 'additional_person_name']);
+		var resFiltered = _.pick(res, ['title', 'issn', 'isbn', 'author', 'author_initials', 'year', 'publisher', 'place_of_publication', 'edition', 'specific_edition', 'volume', 'journal_title', 'issue', 'chapter', 'pages', 'start_page', 'end_page', 'part', 'source', 'series_title_number', 'doi', 'pmid', 'call_number', 'bib_note', 'lcc_number', 'oclc_number', 'type']);
+		var fieldsFiltered = _.pick(res, ['format', 'allow_other_formats', 'pickup_location', 'additional_person_name', 'agree_to_copyright_terms', 'last_interest_date', 'use_alternate_address']);
+
+		var mergedOptions = _.assign({}, {
+			format: 'PHYSICAL',
+			pickup_location: 'MAIN',
+			agree_to_copyright_terms: 'true',
+			allow_other_formats: 'false',
+			last_interest_date: (new Date).toISOString().substr(0, 10), // YYYY-MM-DD
+			use_alternate_address: false,
+			type: 'article',
+		}, resFiltered, fieldsFiltered);
+
+		var xml =
+			'<?xml version="1.0" encoding="UTF-8"?><user_resource_sharing_request>' +
+				'<format desc="' + _.startCase(mergedOptions.format) + '">' + mergedOptions.format + '</format>' +
+				'<pickup_location desc="">' + mergedOptions.pickup_location + '</pickup_location>' +
+				(
+					mergedOptions.type == 'book' ? '<citation_type desc="Book">BK</citation_type>' :
+					mergedOptions.type == 'cr' ? '<citation_type desc="Article">CR</citation_type>' :
+					'<citation_type desc="Article">CR</citation_type>' // Unknown citation type - assume article
+				) +
+				_(mergedOptions)
+					.omit(['format', 'pickup_location', 'type']) // Already processed in special cases above
+					.map((v, k) => '<' + k + '>' + v + '</' + k + '>')
+					.join('\n') +
+			'</user_resource_sharing_request>';
 
 		request.post(el._config.endpoints.resourcesRequest + '/almaws/v1/users/' + userid + '/resource_sharing_requests')
+			.set('Content-Type', 'application/xml')
 			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
-			.send({
-				format: 'PHYSICAL',
-				pickup_location: 'MAIN',
-			})
-			.send(fieldsFiltered)
-			.send(resFiltered)
+			.send(xml)
 			.end(function(err, res) {
-				console.log('GOTBACK-ERR', err);
-				console.log('GOTBACK-TXT', res.text);
-
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.text);
-				callback(null, null);
+				callback();
 			});
 	});
 	// }}}
