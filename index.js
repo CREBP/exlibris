@@ -264,4 +264,4 @@ function ExLibris(config) {
 
 util.inherits(ExLibris, events.EventEmitter);
 
-module.exports = new ExLibris();
+module.exports = ExLibris;

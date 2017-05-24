@@ -4,10 +4,13 @@ var expect = require('chai').expect;
 
 describe('users.search()', function() {
 
+	var el;
+	before('init exlibris object', ()=> el = new exlibris());
+
 	it('should return the first 10 users', function(finish) {
 		this.timeout(30 * 1000);
 
-		exlibris
+		el
 			.setKey(config.apikey)
 			.setRegion('apac')
 			.users.search({limit: 10}, function(err, res) {

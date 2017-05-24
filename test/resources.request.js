@@ -5,11 +5,14 @@ var mlog = require('mocha-logger');
 
 describe('resources.request()', function() {
 
+	var el;
+	before('init exlibris object', ()=> el = new exlibris());
+
 	var user;
-	it('should fetch a sample user', function(finish) {
+	before('should fetch a sample user', function(finish) {
 		this.timeout(30 * 1000);
 
-		exlibris
+		el
 			.setKey(config.apikey)
 			.setRegion('eu')
 			.users.search({limit: 10}, function(err, res) {
@@ -36,7 +39,7 @@ describe('resources.request()', function() {
 		this.timeout(10 * 1000);
 		mlog.log('create request for user', user.id);
 
-		exlibris
+		el
 			.setKey(config.apikey)
 			.setRegion('eu') // If using a sandbox environment this API will only ever respond to the EU region for some reason
 			.resources.request(
