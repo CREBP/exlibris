@@ -233,19 +233,49 @@ function ExLibris(config) {
 	/**
 	* Find a user or users by a query
 	* @param {Object} [query] The query to search users by
+	* @param {number} [query.limit=10] The limit of records to display
+	* @param {number} [query.offset=0] The offset of records to display
+	* @param {string} [query.order_by] The field to sort the records by
+	* @param {Object} [query.q] Optional explicit fields to use, if not specified they are moved from the main query object (e.g. `query.email` -> `query.q.email`)
+	* @param {Object} [query.*] The actual fields to insert (e.g. an object with keys such as `primary_id`, `email`, `first_name`, `last_name` etc.)
 	* @param {function} callback The callback to trigger
 	* @return {Object} This chainable object
 	*/
 	el.users.search = function(query, callback) {
+		var useQuery = query || {};
+
+		// Flatten query.q -> query and remove (no need to have `q` as a seperate object this way) {{{
+		if (!query.q) {
+			var metaFields = ['limit', 'offset', 'order_by'];
+			var newQuery = {q: _.omit(query, metaFields)};
+			metaFields.forEach(f => {
+				if (query[f]) newQuery[f] = query[f];
+			});
+			useQuery = newQuery;
+		}
+		// }}}
+		// Add API key {{{
+		useQuery.apiKey = el._config.apiKey; // Can't pass this in as a header in a get as Almas validation demands it as a query
+		// }}}
+		// Transform query {{{
+		useQuery.q = _(useQuery.q)
+			.map((v, k) => `${k}~${v}`)
+			.join(',');
+		// }}}
+
 		request.get(el._config.endpoints.usersSearch + '/almaws/v1/users')
-			.query(query || {})
-			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
+			.query(useQuery)
 			.buffer()
 			.end(function(err, res) {
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.text);
+
+				var results = xmlParser.xml2js(res.text.substr(res.text.indexOf('<users')), {compact: true}).users.user;
+				if (!results) return callback(null, []); // Nothing found
+
+				// Found something - transform the response
 				callback(null,
-					_.castArray(xmlParser.xml2js(res.text.substr(res.text.indexOf('<users')), {compact: true}).users.user)
+					_.castArray(results)
 						.map(u => ({
 							id: u.primary_id._text,
 							url: u._attributes.link,
