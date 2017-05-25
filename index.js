@@ -245,7 +245,7 @@ function ExLibris(config) {
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.text);
 				callback(null,
-					xmlParser.xml2js(res.text.substr(res.text.indexOf('<users')), {compact: true}).users.user
+					_.castArray(xmlParser.xml2js(res.text.substr(res.text.indexOf('<users')), {compact: true}).users.user)
 						.map(u => ({
 							id: u.primary_id._text,
 							url: u._attributes.link,
