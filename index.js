@@ -191,15 +191,26 @@ function ExLibris(config) {
 		var resFiltered = _.pick(res, ['title', 'issn', 'isbn', 'author', 'author_initials', 'year', 'publisher', 'place_of_publication', 'edition', 'specific_edition', 'volume', 'journal_title', 'issue', 'chapter', 'pages', 'start_page', 'end_page', 'part', 'source', 'series_title_number', 'doi', 'pmid', 'call_number', 'bib_note', 'lcc_number', 'oclc_number', 'type']);
 		var fieldsFiltered = _.pick(res, ['format', 'allow_other_formats', 'pickup_location', 'additional_person_name', 'agree_to_copyright_terms', 'last_interest_date', 'use_alternate_address']);
 
-		var mergedOptions = _.assign({}, {
-			format: 'PHYSICAL',
-			pickup_location: 'MAIN',
-			agree_to_copyright_terms: 'true',
-			allow_other_formats: 'false',
-			last_interest_date: (new Date).toISOString().substr(0, 10), // YYYY-MM-DD
-			use_alternate_address: false,
-			type: 'article',
-		}, resFiltered, fieldsFiltered);
+		var mergedOptions = _({})
+			.assign({ // Setup defaults
+				format: 'PHYSICAL',
+				pickup_location: 'MAIN',
+				agree_to_copyright_terms: 'true',
+				allow_other_formats: 'false',
+				last_interest_date: (new Date).toISOString().substr(0, 10), // YYYY-MM-DD
+				use_alternate_address: false,
+				type: 'article',
+			})
+			.assign(resFiltered, fieldsFiltered) // Add user overrides
+			.mapValues(v => // Escape XML weirdness
+				!_.isString(v) ? v : v
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&apos;')
+			)
+			.value();
 
 		var xml =
 			'<?xml version="1.0" encoding="UTF-8"?><user_resource_sharing_request>' +
