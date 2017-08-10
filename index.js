@@ -168,6 +168,7 @@ function ExLibris(config) {
 	* @param {string} [res.doi]
 	* @param {string} [res.pmid]
 	* @param {string} [res.call_number]
+	* @param {string} [res.note]
 	* @param {string} [res.bib_note]
 	* @param {string} [res.lcc_number]
 	* @param {string} [res.oclc_number]
@@ -188,7 +189,7 @@ function ExLibris(config) {
 		var userid = _.isString(user) ? user : user.id;
 		if (!userid) throw new Error('Invalid UserID');
 
-		var resFiltered = _.pick(res, ['title', 'issn', 'isbn', 'author', 'author_initials', 'year', 'publisher', 'place_of_publication', 'edition', 'specific_edition', 'volume', 'journal_title', 'issue', 'chapter', 'pages', 'start_page', 'end_page', 'part', 'source', 'series_title_number', 'doi', 'pmid', 'call_number', 'bib_note', 'lcc_number', 'oclc_number', 'type']);
+		var resFiltered = _.pick(res, ['title', 'issn', 'isbn', 'author', 'author_initials', 'year', 'publisher', 'place_of_publication', 'edition', 'specific_edition', 'volume', 'journal_title', 'issue', 'chapter', 'pages', 'start_page', 'end_page', 'part', 'source', 'series_title_number', 'doi', 'pmid', 'call_number', 'note', 'bib_note', 'lcc_number', 'oclc_number', 'type']);
 		var fieldsFiltered = _.pick(res, ['format', 'allow_other_formats', 'pickup_location', 'additional_person_name', 'agree_to_copyright_terms', 'last_interest_date', 'use_alternate_address']);
 
 		var mergedOptions = _({})
