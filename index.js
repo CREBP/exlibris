@@ -224,22 +224,25 @@ function ExLibris(config) {
 			'<?xml version="1.0" encoding="UTF-8"?><user_resource_sharing_request>' +
 				'<format desc="' + _.startCase(mergedOptions.format) + '">' + mergedOptions.format + '</format>' +
 				'<pickup_location desc="">' + mergedOptions.pickup_location + '</pickup_location>' +
-				(
-					_.get(mergedOptions, 'citation_type') == 'BK' || mergedOptions.type == 'book' ? '<citation_type desc="Book">BK</citation_type>' :
-					mergedOptions.type == 'cr' ? '<citation_type desc="Article">CR</citation_type>' :
-					'<citation_type desc="Article">CR</citation_type>' // Unknown citation type - assume article
-				) +
 				_(mergedOptions)
 					.omit(['format', 'pickup_location', 'type']) // Already processed in special cases above
 					.map((v, k) => '<' + k + '>' + v + '</' + k + '>')
-					.join('\n') +
+					.join('') +
 			'</user_resource_sharing_request>';
 
 		request.post(el._config.endpoints.resourcesRequest + '/almaws/v1/users/' + userid + '/resource_sharing_requests')
 			.set('Content-Type', 'application/xml')
-			.query({apikey: el._config.apiKey}) // Can't pass this in as a header in a get as Almas validation demands it as a query
+			.query({apikey: el._config.apiKey}) // Can't pass this in as a header as Almas validation demands it as a query
 			.send(xml)
 			.end(function(err, res) {
+				// Debugging - un-comment the below to enable
+				/*
+				console.log('REQUEST', {
+					request: _.pick(res.request, ['method', 'url', 'qs', '_data']),
+					response: _.pick(res, ['statusCode']),
+				});
+				*/
+
 				if (err) return callback(err);
 				if (res.status != 200) return callback(res.text);
 				callback();
