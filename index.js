@@ -146,7 +146,7 @@ function ExLibris(config) {
 	* Place a request for delivery for a given resource
 	* @param {Object|string} res Either the full resource returned by resources.search() / resource.get() or the string ID value
 	* @param {string} [res.title]
-	* @param {string} [res.issn]
+	* @param {string} [res.issn] The ISSN of the reference. NOTE: Exlibris seems really fussy about this field. We will automatically remove non-numeric digits, if the length is not 10 we ignore it
 	* @param {string} [res.isbn]
 	* @param {string} [res.author]
 	* @param {string} [res.author_initials]
@@ -212,6 +212,13 @@ function ExLibris(config) {
 					.replace(/'/g, '&apos;')
 			)
 			.value();
+
+		// Weird extra work we have to do to validate ISSN numbers - remove all non-numeric digits. If its still not numeric ignore it
+		if (mergedOptions.issn) {
+			mergedOptions.issn = mergedOptions.issn.replace(/[^0-9]+/, '');
+			if (!/^[0-9]{10}$/.test(mergedOptions.issn)) delete mergedOptions.issn;
+		}
+
 
 		var xml =
 			'<?xml version="1.0" encoding="UTF-8"?><user_resource_sharing_request>' +
