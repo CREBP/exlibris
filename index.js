@@ -180,7 +180,6 @@ function ExLibris(config) {
 	* @param {Object} [fields.additional_person_name]
 	* @param {Object} [fields.agree_to_copyright_terms='true']
 	* @param {Object} [fields.allow_other_formats='false']
-	* @param {Object} [fields.last_interest_date=today]
 	* @param {Object} [fields.use_alternate_address=false]
 	* @param {function} cb The callback to trigger
 	* @return {Object} This chainable object
@@ -198,7 +197,6 @@ function ExLibris(config) {
 				pickup_location: 'MAIN',
 				agree_to_copyright_terms: 'true',
 				allow_other_formats: 'false',
-				last_interest_date: (new Date).toISOString().substr(0, 10), // YYYY-MM-DD
 				use_alternate_address: false,
 				type: 'article',
 			})
