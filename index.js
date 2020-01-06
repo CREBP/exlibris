@@ -214,7 +214,7 @@ function ExLibris(config) {
 		// Weird extra work we have to do to validate ISSN numbers - remove all non-numeric digits. If its still not numeric ignore it
 		if (mergedOptions.issn) {
 			mergedOptions.issn = mergedOptions.issn.replace(/[^0-9]+/, '');
-			if (!/^[0-9]{10}$/.test(mergedOptions.issn)) delete mergedOptions.issn;
+			if (!(/^[0-9]{8}$/.test(mergedOptions.issn) || /^[0-9]{10}$/.test(mergedOptions.issn) || /^[0-9]{13}$/.test(mergedOptions.issn))) delete mergedOptions.issn;
 		}
 
 

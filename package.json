@@ -1,6 +1,6 @@
 {
   "name": "exlibris",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "ExLibris API wrapper",
   "main": "index.js",
   "directories": {
